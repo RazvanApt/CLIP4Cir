@@ -8,7 +8,10 @@ import torchvision.transforms.functional as F
 from torch.utils.data import Dataset
 from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize
 
-base_path = Path(__file__).absolute().parents[1].absolute()
+# base_path = Path(__file__).absolute().parents[1].absolute()
+base_path = Path.cwd()
+print("Base path: ", base_path)
+
 num_workers = 2 # multiprocessing.cpu_count()
 
 def _convert_image_to_rgb(image):
