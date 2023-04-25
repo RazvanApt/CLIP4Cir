@@ -21,16 +21,22 @@ def clearFromImageSplit(missing_files_names):
 
         with open(path + "\\" +  file_name, 'r') as file:
             arr = json.load(file)
+
+            result = []
+
             for i in arr:
+                hasMissingFile = False
                 for j in missing_files_names:
                     if i == j:
-                        arr.remove(i)
+                        hasMissingFile = True
                         break
+                if hasMissingFile == False:
+                    result.append(i)
 
 
-        output_file_name = file_name
+        output_file_name = file_name[4:]
         with open(output_path + '\\' + output_file_name, "w") as f:
-            json.dump(arr, f)
+            json.dump(result, f)
 
         print("Finish cleaning: " + file_name)
 
@@ -46,18 +52,22 @@ def clearFromCaptions(missing_files_names):
     for file_name in files:
         print("Start cleaning: " + file_name)
 
+        result = []
+
         with open(path + "\\" +  file_name, 'r') as file:
             arr = json.load(file)
             for item in arr:
+                hasMissingFile = False
                 for missing_file in missing_files_names:
                     if ('target' in item and item['target'] == missing_file) or ('candidate' in item and item['candidate'] == missing_file):
-                        arr.remove(item)
+                        hasMissingFile = True
                         break
+                if hasMissingFile == False:
+                    result.append(item)
 
-
-        output_file_name = file_name
+        output_file_name = file_name[4:]
         with open(output_path + '\\' + output_file_name, "w") as f:
-            json.dump(arr, f)
+            json.dump(result, f)
 
         print("Finish cleaning: " + file_name)
 
@@ -78,5 +88,4 @@ if __name__ == '__main__':
     print()
     print("Captions files:")
     clearFromCaptions(missing_files_names)
-
 
