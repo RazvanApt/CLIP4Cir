@@ -10,7 +10,7 @@ from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normal
 
 # base_path = Path(__file__).absolute().parents[1].absolute()
 base_path = Path.cwd()
-print("Base path: ", base_path)
+# print("Base path: ", base_path)
 
 num_workers = 2 # multiprocessing.cpu_count()
 
