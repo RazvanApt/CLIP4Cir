@@ -10,7 +10,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from data_utils import CIRRDataset, FashionIQDataset, num_workers
+from data_utils import CIRRDataset, FashionIQDataset, CSSDataset, num_workers
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
@@ -18,10 +18,10 @@ else:
     device = torch.device("cpu")
 
 
-def extract_index_features(dataset: Union[CIRRDataset, FashionIQDataset], clip_model: CLIP) -> \
+def extract_index_features(dataset: Union[CIRRDataset, FashionIQDataset, CSSDataset], clip_model: CLIP) -> \
         Tuple[torch.tensor, List[str]]:
     """
-    Extract FashionIQ or CIRR index features
+    Extract FashionIQ or CIRR or CSS index features
     :param dataset: FashionIQ or CIRR dataset in 'classic' mode
     :param clip_model: CLIP model
     :return: a tensor of features and a list of images
@@ -35,6 +35,8 @@ def extract_index_features(dataset: Union[CIRRDataset, FashionIQDataset], clip_m
         print(f"extracting CIRR {dataset.split} index features")
     elif isinstance(dataset, FashionIQDataset):
         print(f"extracting fashionIQ {dataset.dress_types} - {dataset.split} index features")
+    elif isinstance(dataset, CSSDataset):
+        print(f"extracting CSS {dataset.split} index features")
     for names, images in tqdm(classic_val_loader):
         images = images.to(device, non_blocking=True)
         with torch.no_grad():
@@ -77,6 +79,28 @@ def generate_randomized_fiq_caption(flattened_captions: List[str]) -> List[str]:
             captions.append(f"{flattened_captions[i + 1].strip('.?, ').capitalize()}")
     return captions
 
+def generate_randomized_css_caption(flattened_captions: List[str]) -> List[str]:
+    """
+    Function which randomize the CSS training captions in four way: (a) cap1 and cap2 (b) cap2 and cap1 (c) cap1
+    (d) cap2
+    :param flattened_captions: the list of caption to randomize, note that the length of such list is 2*batch_size since
+     to each triplet are associated two captions
+    :return: the randomized caption list (with length = batch_size)
+    """
+    captions = []
+    for i in range(0, len(flattened_captions), 2):
+        random_num = random.random()
+        if random_num < 0.25:
+            captions.append(
+                f"{flattened_captions[i].strip('.?, ').capitalize()} and {flattened_captions[i + 1].strip('.?, ')}")
+        elif 0.25 < random_num < 0.5:
+            captions.append(
+                f"{flattened_captions[i + 1].strip('.?, ').capitalize()} and {flattened_captions[i].strip('.?, ')}")
+        elif 0.5 < random_num < 0.75:
+            captions.append(f"{flattened_captions[i].strip('.?, ').capitalize()}")
+        else:
+            captions.append(f"{flattened_captions[i + 1].strip('.?, ').capitalize()}")
+    return captions
 
 def collate_fn(batch: list):
     """

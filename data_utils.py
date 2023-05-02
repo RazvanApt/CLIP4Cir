@@ -98,6 +98,92 @@ def targetpad_transform(target_ratio: float, dim: int):
         Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
     ])
 
+class CSSDataset(Dataset):
+    """
+    CSS dataset class which manage CSS data.
+    The dataset can be used in 'relative' or 'classic' mode:
+        - In 'classic' mode the dataset yield tuples made of (image_name, image)
+        - In 'relative' mode the dataset yield tuples made of:
+            - (reference_image, target_image, image_captions) when split == train
+            - (reference_name, target_name, image_captions) when split == val
+            - (reference_name, reference_image, image_captions) when split == test
+    """
+
+    def __init__(self, split: str, mode: str, preprocess: callable):
+        """
+        :param split: dataset split, should be in ['test', 'train', 'val']
+        :param mode: dataset mode, should be in ['relative', 'classic']:
+            - In 'classic' mode the dataset yield tuples made of (image_name, image)
+            - In 'relative' mode the dataset yield tuples made of:
+                - (reference_image, target_image, image_captions) when split == train
+                - (reference_name, target_name, image_captions) when split == val
+                - (reference_name, reference_image, image_captions) when split == test
+        :param preprocess: function which preprocesses the image
+        """
+        self.mode = mode
+        self.split = split
+
+        if mode not in ['relative', 'classic']:
+            raise ValueError("mode should be in ['relative', 'classic']")
+        if split not in ['test', 'train', 'val']:
+            raise ValueError("split should be in ['test', 'train', 'val']")
+        
+        self.preprocess = preprocess
+
+        # get triplets made by (reference_image, target_image, a pair of relative captions)
+        self.triplets: List[dict] = []
+        with open(base_path / 'css-dataset' / 'captions' / f'cap.{split}.json') as f:
+            self.triplets.extend(json.load(f))
+
+        # get the image names
+        self.image_names: list = []
+        with open(base_path / 'css-dataset' / 'image_splits' / f'split.{split}.json') as f:
+            self.image_names.extend(json.load(f))
+
+        print(f"CSS {split} - in {mode} mode initialized")
+
+    def __getitem__(self, index):
+        try:
+            if self.mode == 'relative':
+                image_captions = self.triplets[index]['captions']
+                reference_name = self.triplets[index]['candidate']
+
+                if self.split == 'train':
+                    reference_image_path = base_path / 'css-dataset' / 'images' / f"{reference_name}.png"
+                    reference_image = self.preprocess(PIL.Image.open(reference_image_path))
+                    target_name = self.triplets[index]['target']
+                    target_image_path = base_path / 'css-dataset' / 'images' / f"{target_name}.png"
+                    target_image = self.preprocess(PIL.Image.open(target_image_path))
+                    return reference_image, target_image, image_captions
+
+                elif self.split == 'val':
+                    target_name = self.triplets[index]['target']
+                    return reference_name, target_name, image_captions
+
+                elif self.split == 'test':
+                    reference_image_path = base_path / 'css-dataset' / 'images' / f"{reference_name}.png"
+                    reference_image = self.preprocess(PIL.Image.open(reference_image_path))
+                    return reference_name, reference_image, image_captions
+
+            elif self.mode == 'classic':
+                image_name = self.image_names[index]
+                image_path = base_path / 'css-dataset' / 'images' / f"{image_name}.png"
+                image = self.preprocess(PIL.Image.open(image_path))
+                return image_name, image
+
+            else:
+                raise ValueError("mode should be in ['relative', 'classic']")
+        except Exception as e:
+            print(f"Exception: {e}")
+
+    def __len__(self):
+        if self.mode == 'relative':
+            return len(self.triplets)
+        elif self.mode == 'classic':
+            return len(self.image_names)
+        else:
+            raise ValueError("mode should be in ['relative', 'classic']")
+
 
 class FashionIQDataset(Dataset):
     """
