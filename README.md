@@ -7,3 +7,7 @@ py combiner_train.py --dataset 'FashionIQ' --api-key 'L2HqxFizu3EIe1kErxIUPKlXP'
 
 Images archive drive folder:
 https://drive.google.com/file/d/172srLMk1Ut5hYL112y-dbu7UrT-Yo0i9/view?usp=share_link
+
+CSS Dataset: https://drive.google.com/file/d/1wPqMw-HKmXUG2qTgYBiTNUnjz83hA2tY/view?usp=sharing
+
+CSS Image archive: 
