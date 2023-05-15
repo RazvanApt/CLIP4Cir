@@ -392,7 +392,7 @@ def combiner_training_css(projection_dim: int, hidden_dim: int, num_epochs: int,
                 results_dict.update({
                     f'average_recall_at10': recall_at10,
                     f'average_recall_at50': recall_at50,
-                    f'average_recall': (recalls_at50 + recalls_at10) / 2
+                    f'average_recall': (mean(recalls_at50) + mean(recalls_at10)) / 2
                 })
 
                 print(json.dumps(results_dict, indent=4))
