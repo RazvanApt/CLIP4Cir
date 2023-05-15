@@ -387,11 +387,11 @@ def combiner_training_css(projection_dim: int, hidden_dim: int, num_epochs: int,
                                                                     index_names, combiner.combine_features)
                 
                 results_dict = {}
-                results_dict['recall_at10'] = recall_at10
-                results_dict['recall_at50'] = recall_at50
+                results_dict['recall_at10'] = recall_at10[0]
+                results_dict['recall_at50'] = recall_at50[0]
                 results_dict.update({
-                    f'average_recall_at10': recall_at10,
-                    f'average_recall_at50': recall_at50,
+                    f'average_recall_at10': mean(recall_at10),
+                    f'average_recall_at50': mean(recall_at50),
                     f'average_recall': (mean(recalls_at50) + mean(recalls_at10)) / 2
                 })
 
