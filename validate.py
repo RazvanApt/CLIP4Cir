@@ -222,7 +222,7 @@ def generate_fiq_val_predictions(clip_model: CLIP, relative_val_dataset: Fashion
     return predicted_features, target_names
 
 
-def fashioniq_val_retrieval(dress_type: str, combining_function: callable, clip_model: CLIP, preprocess: callable):
+def fashioniq_val_retrieval(dataset: str, dress_type: str, combining_function: callable, clip_model: CLIP, preprocess: callable):
     """
     Perform retrieval on FashionIQ validation set computing the metrics. To combine the features the `combining_function`
     is used
@@ -236,9 +236,9 @@ def fashioniq_val_retrieval(dress_type: str, combining_function: callable, clip_
     clip_model = clip_model.float().eval()
 
     # Define the validation datasets and extract the index features
-    classic_val_dataset = FashionIQDataset('val', [dress_type], 'classic', preprocess)
+    classic_val_dataset = FashionIQDataset(dataset, 'val', [dress_type], 'classic', preprocess)
     index_features, index_names = extract_index_features(classic_val_dataset, clip_model)
-    relative_val_dataset = FashionIQDataset('val', [dress_type], 'relative', preprocess)
+    relative_val_dataset = FashionIQDataset(dataset, 'val', [dress_type], 'relative', preprocess)
 
     return compute_fiq_val_metrics(relative_val_dataset, clip_model, index_features, index_names,
                                    combining_function)
@@ -434,27 +434,27 @@ def main():
         print(f"{recall_at10 = }")
         print(f"{recall_at50 = }")
 
-    elif args.dataset.lower() == 'css':
-        recall_at10, recall_at50 = css_val_retrieval(combining_function, clip_model, preprocess)
+    # elif args.dataset.lower() == 'css':
+    #    recall_at10, recall_at50 = css_val_retrieval(combining_function, clip_model, preprocess)
+    #    print(f"{recall_at10 = }")
+    #    print(f"{recall_at50 = }")
 
-        print(f"{recall_at10 = }")
-        print(f"{recall_at50 = }")
-
-    elif args.dataset.lower() == 'fashioniq':
+    elif args.dataset.lower() == 'fashioniq' or args.dataset.lower() == 'css':
+        dataset = args.dataset.lower()
         average_recall10_list = []
         average_recall50_list = []
 
-        shirt_recallat10, shirt_recallat50 = fashioniq_val_retrieval('shirt', combining_function, clip_model,
+        shirt_recallat10, shirt_recallat50 = fashioniq_val_retrieval(dataset, 'shirt', combining_function, clip_model,
                                                                      preprocess)
         average_recall10_list.append(shirt_recallat10)
         average_recall50_list.append(shirt_recallat50)
 
-        dress_recallat10, dress_recallat50 = fashioniq_val_retrieval('dress', combining_function, clip_model,
+        dress_recallat10, dress_recallat50 = fashioniq_val_retrieval(dataset, 'dress', combining_function, clip_model,
                                                                      preprocess)
         average_recall10_list.append(dress_recallat10)
         average_recall50_list.append(dress_recallat50)
 
-        toptee_recallat10, toptee_recallat50 = fashioniq_val_retrieval('toptee', combining_function, clip_model,
+        toptee_recallat10, toptee_recallat50 = fashioniq_val_retrieval(dataset, 'toptee', combining_function, clip_model,
                                                                        preprocess)
         average_recall10_list.append(toptee_recallat10)
         average_recall50_list.append(toptee_recallat50)
@@ -471,7 +471,7 @@ def main():
         print(f"average recall10 = {mean(average_recall10_list)}")
         print(f"average recall50 = {mean(average_recall50_list)}")
     else:
-        raise ValueError("Dataset should be either 'CIRR' or 'FashionIQ")
+        raise ValueError("Dataset should be either 'CIRR', 'FashionIQ' or 'CSS'")
 
 
 if __name__ == '__main__':

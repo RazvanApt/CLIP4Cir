@@ -35,8 +35,9 @@ def extract_index_features(dataset: Union[CIRRDataset, FashionIQDataset, CSSData
         print(f"extracting CIRR {dataset.split} index features")
     elif isinstance(dataset, FashionIQDataset):
         print(f"extracting fashionIQ {dataset.dress_types} - {dataset.split} index features")
-    elif isinstance(dataset, CSSDataset):
-        print(f"extracting CSS {dataset.split} index features")
+    # elif isinstance(dataset, CSSDataset):
+    #     print(f"extracting CSS {dataset.split} index features")
+
     for names, images in tqdm(classic_val_loader):
         images = images.to(device, non_blocking=True)
         with torch.no_grad():

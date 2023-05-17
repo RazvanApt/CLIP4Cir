@@ -215,7 +215,7 @@ def clip_finetune_css(num_epochs: int, clip_model_name: str, learning_rate: floa
 
 def clip_finetune_fiq(train_dress_types: List[str], val_dress_types: List[str],
                       num_epochs: int, clip_model_name: str, learning_rate: float, batch_size: int,
-                      validation_frequency: int, transform: str, save_training: bool, encoder: str, save_best: bool,
+                      validation_frequency: int, transform: str, save_training: bool, encoder: str, save_best: bool, dataset: str,
                       **kwargs):
     """
     Fine-tune CLIP on the FashionIQ dataset using as combining function the image-text element-wise sum
@@ -231,6 +231,7 @@ def clip_finetune_fiq(train_dress_types: List[str], val_dress_types: List[str],
     :param save_training: when True save the weights of the fine-tuned CLIP model
     :param encoder: which CLIP encoder to fine-tune, should be in ['both', 'text', 'image']
     :param save_best: when True save only the weights of the best CLIP model wrt the average_recall metric
+    :param dataset: dataset used
     :param kwargs: if you use the `targetpad` transform you should prove `target_ratio` as kwarg
     """
 
@@ -289,9 +290,9 @@ def clip_finetune_fiq(train_dress_types: List[str], val_dress_types: List[str],
     # Define the validation datasets
     for idx, dress_type in enumerate(val_dress_types):
         idx_to_dress_mapping[idx] = dress_type
-        relative_val_dataset = FashionIQDataset('val', [dress_type], 'relative', preprocess, )
+        relative_val_dataset = FashionIQDataset(dataset, 'val', [dress_type], 'relative', preprocess, )
         relative_val_datasets.append(relative_val_dataset)
-        classic_val_dataset = FashionIQDataset('val', [dress_type], 'classic', preprocess, )
+        classic_val_dataset = FashionIQDataset(dataset, 'val', [dress_type], 'classic', preprocess, )
         classic_val_datasets.append(classic_val_dataset)
         if encoder == 'text':
             index_features_and_names = extract_index_features(classic_val_dataset, clip_model)
@@ -299,7 +300,7 @@ def clip_finetune_fiq(train_dress_types: List[str], val_dress_types: List[str],
             index_names_list.append(index_features_and_names[1])
 
     # Define the train datasets and the combining function
-    relative_train_dataset = FashionIQDataset('train', train_dress_types, 'relative', preprocess)
+    relative_train_dataset = FashionIQDataset(dataset, 'train', train_dress_types, 'relative', preprocess)
     relative_train_loader = DataLoader(dataset=relative_train_dataset, batch_size=batch_size,
                                        num_workers=num_workers, pin_memory=False, collate_fn=collate_fn,
                                        drop_last=True, shuffle=True)
@@ -643,7 +644,8 @@ if __name__ == '__main__':
         "target_ratio": args.target_ratio,
         "save_training": args.save_training,
         "encoder": args.encoder,
-        "save_best": args.save_best
+        "save_best": args.save_best,
+        "dataset": args.dataset
     }
 
     if args.api_key and args.workspace:
@@ -670,9 +672,9 @@ if __name__ == '__main__':
 
     if args.dataset.lower() == 'cirr':
         clip_finetune_cirr(**training_hyper_params)
-    elif args.dataset.lower() == 'css':
-      clip_finetune_css(**training_hyper_params)
-    elif args.dataset.lower() == 'fashioniq':
+    #elif args.dataset.lower() == 'css':
+    #  clip_finetune_css(**training_hyper_params)
+    elif args.dataset.lower() == 'fashioniq' or args.dataset.lower() == 'css':
         training_hyper_params.update(
             {'train_dress_types': ['dress', 'toptee', 'shirt'], 'val_dress_types': ['dress', 'toptee', 'shirt']})
         clip_finetune_fiq(**training_hyper_params)

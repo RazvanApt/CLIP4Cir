@@ -24,7 +24,7 @@ from validate import compute_cirr_val_metrics, compute_fiq_val_metrics, compute_
 def combiner_training_fiq(train_dress_types: List[str], val_dress_types: List[str],
                           projection_dim: int, hidden_dim: int, num_epochs: int, clip_model_name: str,
                           combiner_lr: float, batch_size: int, clip_bs: int, validation_frequency: int,
-                          transform: str, save_training: bool, save_best: bool, **kwargs):
+                          transform: str, save_training: bool, save_best: bool, dataset: str, **kwargs):
     """
     Train the Combiner on FashionIQ dataset keeping frozed the CLIP model
     :param train_dress_types: FashionIQ categories to train on
@@ -41,6 +41,7 @@ def combiner_training_fiq(train_dress_types: List[str], val_dress_types: List[st
                 targetpad is also required to provide `target_ratio` kwarg.
     :param save_training: when True save the weights of the Combiner network
     :param save_best: when True save only the weights of the best Combiner wrt the average_recall metric
+    :param dataset: the dataset that is used
     :param kwargs: if you use the `targetpad` transform you should prove `target_ratio` as kwarg. If you want to load a
                 fine-tuned version of clip you should provide `clip_model_path` as kwarg.
     """
@@ -90,16 +91,16 @@ def combiner_training_fiq(train_dress_types: List[str], val_dress_types: List[st
     # Define the validation datasets and extract the validation index features for each dress_type
     for idx, dress_type in enumerate(val_dress_types):
         idx_to_dress_mapping[idx] = dress_type
-        relative_val_dataset = FashionIQDataset('val', [dress_type], 'relative', preprocess)
+        relative_val_dataset = FashionIQDataset(dataset, 'val', [dress_type], 'relative', preprocess)
         relative_val_datasets.append(relative_val_dataset)
-        classic_val_dataset = FashionIQDataset('val', [dress_type], 'classic', preprocess)
+        classic_val_dataset = FashionIQDataset(dataset, 'val', [dress_type], 'classic', preprocess)
         index_features_and_names = extract_index_features(classic_val_dataset, clip_model)
         index_features_list.append(index_features_and_names[0])
         index_names_list.append(index_features_and_names[1])
 
     # Define the combiner and the train dataset
     combiner = Combiner(feature_dim, projection_dim, hidden_dim).to(device, non_blocking=True)
-    relative_train_dataset = FashionIQDataset('train', train_dress_types, 'relative', preprocess)
+    relative_train_dataset = FashionIQDataset(dataset, 'train', train_dress_types, 'relative', preprocess)
     relative_train_loader = DataLoader(dataset=relative_train_dataset, batch_size=batch_size,
                                        num_workers=num_workers, pin_memory=True, collate_fn=collate_fn,
                                        drop_last=True, shuffle=True)
@@ -649,6 +650,7 @@ if __name__ == '__main__':
         "target_ratio": args.target_ratio,
         "save_training": args.save_training,
         "save_best": args.save_best,
+        "dataset": args.dataset
     }
 
     if args.api_key and args.workspace:
@@ -675,9 +677,9 @@ if __name__ == '__main__':
 
     if args.dataset.lower() == 'cirr':
         combiner_training_cirr(**training_hyper_params)
-    elif args.dataset.lower() == 'css':
-      combiner_training_css(**training_hyper_params)
-    elif args.dataset.lower() == 'fashioniq':
+    #elif args.dataset.lower() == 'css':
+    #   combiner_training_css(**training_hyper_params)
+    elif args.dataset.lower() == 'fashioniq' or args.dataset.lower() == 'css':
         training_hyper_params.update(
             {'train_dress_types': ['dress', 'toptee', 'shirt'], 'val_dress_types': ['dress', 'toptee', 'shirt']})
         combiner_training_fiq(**training_hyper_params)
